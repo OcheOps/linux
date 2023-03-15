@@ -235,8 +235,6 @@ static int io_sq_thread(void *data)
 		set_cpus_allowed_ptr(current, cpu_online_mask);
 	current->flags |= PF_NO_SETAFFINITY;
 
-	audit_alloc_kernel(current);
-
 	mutex_lock(&sqd->lock);
 	while (1) {
 		bool cap_entries, sqt_spin = false;
@@ -310,13 +308,11 @@ static int io_sq_thread(void *data)
 	io_run_task_work();
 	mutex_unlock(&sqd->lock);
 
-	audit_free(current);
-
 	complete(&sqd->exited);
 	do_exit(0);
 }
 
-int io_sqpoll_wait_sq(struct io_ring_ctx *ctx)
+void io_sqpoll_wait_sq(struct io_ring_ctx *ctx)
 {
 	DEFINE_WAIT(wait);
 
@@ -331,7 +327,6 @@ int io_sqpoll_wait_sq(struct io_ring_ctx *ctx)
 	} while (!signal_pending(current));
 
 	finish_wait(&ctx->sqo_sq_wait, &wait);
-	return 0;
 }
 
 __cold int io_sq_offload_create(struct io_ring_ctx *ctx,
